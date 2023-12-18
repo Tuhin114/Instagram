@@ -1,10 +1,13 @@
+// Import necessary modules and models
 var express = require("express");
 var router = express.Router();
 const userModel = require("./users");
 const passport = require("passport");
-const localStategy = require("passport-local");
+const localStrategy = require("passport-local");
 
-passport.use(new localStategy(userModel.authenticate()));
+// Define Passport local strategy using userModel.authenticate()
+passport.use(new localStrategy(userModel.authenticate()));
+
 router.get("/", function (req, res) {
   res.render("index", { footer: false });
 });
@@ -33,17 +36,28 @@ router.get("/upload", function (req, res) {
   res.render("upload", { footer: true });
 });
 
+// Handle user registration
 router.post("/register", function (req, res, next) {
+  // Create a new user based on the posted data
   const userData = new userModel({
     username: req.body.username,
     name: req.body.name,
     email: req.body.email,
   });
-});
 
-userModel.register(userData, req.body.password).then(function () {
-  passport.authenticate("local")(req, res, function () {
-    res.redirect("/profile");
+  // Register the new user using userModel.register()
+  userModel.register(userData, req.body.password, function (err, user) {
+    if (err) {
+      console.error(err);
+      // Handle registration error, such as redirecting back to registration page with a message
+      return res.redirect("/register"); // Adjust this route based on your setup
+    }
+
+    // Authenticate the registered user
+    passport.authenticate("local")(req, res, function () {
+      // Redirect to the profile page upon successful registration and authentication
+      res.redirect("/profile");
+    });
   });
 });
 
