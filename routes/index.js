@@ -61,4 +61,12 @@ router.post("/register", function (req, res, next) {
   });
 });
 
+router.post(
+  "/login",
+  passport.authenticate("local", {
+    successRedirect: "/profile",
+    failureRedirect: "/login",
+  }),
+  function (req, res) {}
+);
 module.exports = router;
