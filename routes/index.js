@@ -16,23 +16,23 @@ router.get("/login", function (req, res) {
   res.render("login", { footer: false });
 });
 
-router.get("/feed", function (req, res) {
+router.get("/feed", isLoggedIn, function (req, res) {
   res.render("feed", { footer: true });
 });
 
-router.get("/profile", function (req, res) {
+router.get("/profile", isLoggedIn, function (req, res) {
   res.render("profile", { footer: true });
 });
 
-router.get("/search", function (req, res) {
+router.get("/search", isLoggedIn, function (req, res) {
   res.render("search", { footer: true });
 });
 
-router.get("/edit", function (req, res) {
+router.get("/edit", isLoggedIn, function (req, res) {
   res.render("edit", { footer: true });
 });
 
-router.get("/upload", function (req, res) {
+router.get("/upload", isLoggedIn, function (req, res) {
   res.render("upload", { footer: true });
 });
 
@@ -69,4 +69,30 @@ router.post(
   }),
   function (req, res) {}
 );
+
+router.get("/logout", function (req, res, next) {
+  req.logout(function (err) {
+    if (err) {
+      return next(err);
+      res.redirect("/");
+    }
+  });
+});
+
+function isLoggedIn(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  // If the user is not authenticated, redirect them to the login page
+  res.redirect("/login");
+}
+
+// This line, res.redirect("/login"), seems to be misplaced in the previous code.
+// It should be placed inside a middleware or route handler, not outside of them.
+// If this is intended as a fallback route, you might want to move it inside an error handler or an undefined route handler.
+
+// For instance, you can add a catch-all route handler for undefined routes at the end:
+router.use(function (req, res, next) {
+  res.status(404).send("Not Found");
+});
 module.exports = router;
