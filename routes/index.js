@@ -4,6 +4,7 @@ var router = express.Router();
 const userModel = require("./users");
 const passport = require("passport");
 const localStrategy = require("passport-local");
+const upload = require("./multer");
 
 // Define Passport local strategy using userModel.authenticate()
 passport.use(new localStrategy(userModel.authenticate()));
@@ -20,16 +21,56 @@ router.get("/feed", isLoggedIn, function (req, res) {
   res.render("feed", { footer: true });
 });
 
-router.get("/profile", isLoggedIn, function (req, res) {
-  res.render("profile", { footer: true });
+router.get("/profile", isLoggedIn, async function (req, res) {
+  try {
+    // Ensure req.session.passport.user is defined before accessing its properties
+    if (req.session.passport && req.session.passport.user) {
+      const user = await userModel.findOne({
+        username: req.session.passport.user,
+      });
+      if (user) {
+        res.render("profile", { footer: true, user });
+      } else {
+        // Handle case where user is not found in the database
+        res.status(404).send("User not found");
+      }
+    } else {
+      // Handle case where req.session.passport.user is undefined
+      res.status(401).send("User authentication failed");
+    }
+  } catch (err) {
+    // Handle other errors that might occur during user retrieval
+    console.error(err);
+    res.status(500).send("Internal Server Error");
+  }
 });
 
 router.get("/search", isLoggedIn, function (req, res) {
   res.render("search", { footer: true });
 });
 
-router.get("/edit", isLoggedIn, function (req, res) {
-  res.render("edit", { footer: true });
+router.get("/edit", isLoggedIn, async function (req, res) {
+  try {
+    // Ensure req.session.passport.user is defined before accessing its properties
+    if (req.session.passport && req.session.passport.user) {
+      const user = await userModel.findOne({
+        username: req.session.passport.user,
+      });
+      if (user) {
+        res.render("edit", { footer: true, user });
+      } else {
+        // Handle case where user is not found in the database
+        res.status(404).send("User not found");
+      }
+    } else {
+      // Handle case where req.session.passport.user is undefined
+      res.status(401).send("User authentication failed");
+    }
+  } catch (err) {
+    // Handle other errors that might occur during user retrieval
+    console.error(err);
+    res.status(500).send("Internal Server Error");
+  }
 });
 
 router.get("/upload", isLoggedIn, function (req, res) {
@@ -79,6 +120,45 @@ router.get("/logout", function (req, res, next) {
   });
 });
 
+router.post("/update", upload.single("image"), async function (req, res) {
+  try {
+    // Ensure user is authenticated before accessing session information
+    if (
+      req.isAuthenticated() &&
+      req.session.passport &&
+      req.session.passport.user
+    ) {
+      const updatedUserData = {
+        username: req.body.username,
+        name: req.body.name,
+        bio: req.body.bio,
+      };
+
+      const user = await userModel.findOneAndUpdate(
+        { username: req.session.passport.user },
+        updatedUserData,
+        { new: true }
+      );
+
+      // Check if the user exists and then update profile image if a file was uploaded
+      if (user) {
+        if (req.file) {
+          user.profileImage = req.file.filename;
+          await user.save();
+        }
+        return res.redirect("/profile");
+      } else {
+        return res.status(404).send("User not found");
+      }
+    } else {
+      return res.status(401).send("User authentication failed");
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send("Internal Server Error");
+  }
+});
+
 function isLoggedIn(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
@@ -87,11 +167,6 @@ function isLoggedIn(req, res, next) {
   res.redirect("/login");
 }
 
-// This line, res.redirect("/login"), seems to be misplaced in the previous code.
-// It should be placed inside a middleware or route handler, not outside of them.
-// If this is intended as a fallback route, you might want to move it inside an error handler or an undefined route handler.
-
-// For instance, you can add a catch-all route handler for undefined routes at the end:
 router.use(function (req, res, next) {
   res.status(404).send("Not Found");
 });
