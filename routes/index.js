@@ -2,6 +2,7 @@
 var express = require("express");
 var router = express.Router();
 const userModel = require("./users");
+const postModel = require("./post");
 const passport = require("passport");
 const localStrategy = require("passport-local");
 const upload = require("./multer");
@@ -158,6 +159,26 @@ router.post("/update", upload.single("image"), async function (req, res) {
     return res.status(500).send("Internal Server Error");
   }
 });
+
+router.post(
+  "/upload",
+  isLoggedIn,
+  upload.single("image"),
+  async function (req, res) {
+    const user = await userModel.findOne({
+      username: req.session.passport.user,
+    });
+    const post = await postModel.create({
+      picture: req.file.filename,
+      user: user._id,
+      caption: req.body.caption,
+    });
+
+    user.posts.push(post._id);
+    await user.save();
+    res.redirect("/feed");
+  }
+);
 
 function isLoggedIn(req, res, next) {
   if (req.isAuthenticated()) {
