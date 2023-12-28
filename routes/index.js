@@ -18,8 +18,9 @@ router.get("/login", function (req, res) {
   res.render("login", { footer: false });
 });
 
-router.get("/feed", isLoggedIn, function (req, res) {
-  res.render("feed", { footer: true });
+router.get("/feed", isLoggedIn, async function (req, res) {
+  const posts = await postModel.find().populate("user");
+  res.render("feed", { footer: true, posts });
 });
 
 router.get("/profile", isLoggedIn, async function (req, res) {
