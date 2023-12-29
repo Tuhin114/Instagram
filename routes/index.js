@@ -27,9 +27,11 @@ router.get("/profile", isLoggedIn, async function (req, res) {
   try {
     // Ensure req.session.passport.user is defined before accessing its properties
     if (req.session.passport && req.session.passport.user) {
-      const user = await userModel.findOne({
-        username: req.session.passport.user,
-      });
+      const user = await userModel
+        .findOne({
+          username: req.session.passport.user,
+        })
+        .populate("posts");
       if (user) {
         res.render("profile", { footer: true, user });
       } else {
