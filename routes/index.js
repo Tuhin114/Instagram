@@ -49,7 +49,13 @@ router.get("/profile", isLoggedIn, async function (req, res) {
   }
 });
 
-router.get("/search", isLoggedIn, function (req, res) {
+router.get("/search", isLoggedIn, async function (req, res) {
+  const regex = new RegExp(`^${req.params.username}`, "i");
+  const users = await userModel.find({ username: regex });
+  res.json(users);
+});
+
+router.get("/username/:username", isLoggedIn, function (req, res) {
   res.render("search", { footer: true });
 });
 
