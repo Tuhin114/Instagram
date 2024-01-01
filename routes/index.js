@@ -49,6 +49,7 @@ router.get("/profile", isLoggedIn, async function (req, res) {
   }
 });
 
+// Route to handle searching for users based on a username query parameter
 router.get("/search", isLoggedIn, async function (req, res) {
   const regex = new RegExp(`^${req.params.username}`, "i");
   const users = await userModel.find({ username: regex });

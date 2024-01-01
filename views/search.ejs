@@ -20,22 +20,33 @@
 
   let clutter = "";
   inp.addEventListener("input", function () {
-    axios.get(`/username/${inp.value}`).then(function (data) {
-      data.data.forEach(function (elem) {
-        clutter += `<a href="/profile" class="outline-none">
-      <div class="text-white flex items-center gap-2 mt-5">
-        <div class="image w-[11vw] h-[11vw] rounded-full bg-sky-100">
-          <img src="/images/uploads/${elem.profileImage}" alt="" />
-        </div>
-        <div class="text">
-          <h3>${elem.username}</h3>
-          <h4 class="text-xs opacity-30 leading-none">${elem.name}</h4>
-        </div>
-      </div>
-    </a>`;
+    axios
+      .get(`/username/${inp.value}`)
+      .then(function (response) {
+        const data = response.data;
+        data.forEach(function (elem) {
+          clutter += `<a href="/profile" class="outline-none">
+          <div class="text-white flex items-center gap-2 mt-5">
+            <div class="image w-[11vw] h-[11vw] rounded-full bg-sky-100">
+              <img src="/images/uploads/${elem.profileImage}" alt="" />
+            </div>
+            <div class="text">
+              <h3>${elem.username}</h3>
+              <h4 class="text-xs opacity-30 leading-none">${elem.name}</h4>
+            </div>
+          </div>
+        </a>`;
+        });
+        document.querySelector(".users").innerHTML = clutter;
+      })
+      .catch(function (error) {
+        console.error("Error fetching data:", error);
       });
-      document.querySelector("users").innerHTML = clutter;
-    });
+  });
+
+  // Prevent default form submission behavior
+  inp.closest("form").addEventListener("submit", function (e) {
+    e.preventDefault();
   });
 </script>
 <% include ./partials/footer.ejs %>
